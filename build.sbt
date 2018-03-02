@@ -9,7 +9,7 @@ val telegramDependencies = Seq(
 
 val storageDependencies = Seq(
   "net.debasishg" %% "redisreact" % "0.9",
-  "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
+  "org.postgresql" % "postgresql" % "42.2.1",
   "com.typesafe.slick" %% "slick" % "3.2.1"
 )
 
