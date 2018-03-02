@@ -23,9 +23,14 @@ val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.0.4" % Test
 )
 
+val jsonDependencies = Seq(
+  "org.json4s" %% "json4s-jackson" % "3.5.3"
+)
+
 libraryDependencies ++= (
   testDependencies ++
   telegramDependencies ++
   storageDependencies ++
-  nd4sDependencies
+  nd4sDependencies ++
+  jsonDependencies
 )
