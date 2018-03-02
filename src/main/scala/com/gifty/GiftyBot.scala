@@ -12,10 +12,6 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
 
   }
 
-  onCommand(config.getString("bot.command.add_question")) { implicit msg =>
-
-  }
-
   onCommand(config.getString("bot.command.help")) { implicit msg =>
 
   }

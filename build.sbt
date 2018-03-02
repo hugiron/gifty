@@ -18,7 +18,13 @@ val nd4sDependencies = Seq(
   "org.nd4j" %% "nd4s" % "0.9.1"
 )
 
+val testDependencies = Seq(
+  "org.scalamock" %% "scalamock" % "4.0.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test
+)
+
 libraryDependencies ++= (
+  testDependencies ++
   telegramDependencies ++
   storageDependencies ++
   nd4sDependencies
