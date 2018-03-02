@@ -1,38 +1,39 @@
 package com.gifty
 
+import com.gifty.util.UI
 import info.mukel.telegrambot4s.api.{Polling, TelegramBot}
 import info.mukel.telegrambot4s.api.declarative.{Callbacks, Commands}
 import com.typesafe.config.{Config, ConfigFactory}
 
 object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
-  lazy val config: Config = ConfigFactory.load()
-  lazy val token: String = config.getString("telegram.token")
+  val config: Config = ConfigFactory.load()
+  val token: String = config.getString("telegram.token")
 
-  onCommand(config.getString("bot.command.start")) { implicit msg =>
-
-  }
-
-  onCommand(config.getString("bot.command.help")) { implicit msg =>
+  onCommand(UI.startCommand) { implicit msg =>
 
   }
 
-  onCallbackWithTag(config.getString("bot.button.yes.tag")) { implicit cbq =>
+  onCommand(UI.helpCommand) { implicit msg =>
 
   }
 
-  onCallbackWithTag(config.getString("bot.button.no.tag")) { implicit cbq =>
+  onCallbackWithTag(UI.yesButton._1) { implicit cbq =>
 
   }
 
-  onCallbackWithTag(config.getString("bot.button.not_know.tag")) { implicit cbq =>
+  onCallbackWithTag(UI.noButton._1) { implicit cbq =>
 
   }
 
-  onCallbackWithTag(config.getString("bot.button.accepted.tag")) { implicit cbq =>
+  onCallbackWithTag(UI.notKnowButton._1) { implicit cbq =>
 
   }
 
-  onCallbackWithTag(config.getString("bot.button.rejected.tag")) { implicit cbq =>
+  onCallbackWithTag(UI.acceptedButton._1) { implicit cbq =>
+
+  }
+
+  onCallbackWithTag(UI.rejectedButton._1) { implicit cbq =>
 
   }
 }
