@@ -6,7 +6,7 @@ import org.nd4s.Implicits._
 object Implicits {
   implicit class PairsExtension(pairs: List[(Int, Int)]) {
     def toRedis(): String = {
-      pairs.map(x => s"${x._1}#${x._2}").mkString("#")
+      pairs.map(x => s"${x._1}#${x._2}").mkString("|")
     }
   }
 
