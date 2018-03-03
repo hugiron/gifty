@@ -24,7 +24,7 @@ val testDependencies = Seq(
 )
 
 val jsonDependencies = Seq(
-  "org.json4s" %% "json4s-jackson" % "3.5.3"
+  "org.json4s" %% "json4s-native" % "3.5.3"
 )
 
 libraryDependencies ++= (

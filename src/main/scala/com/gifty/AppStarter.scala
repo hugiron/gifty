@@ -6,6 +6,8 @@ import com.gifty.model._
 import com.redis.RedisClient
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.meta.MTable
+import org.json4s._
+import com.gifty.Implicits._
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -29,10 +31,9 @@ object AppStarter extends App {
   Await.result(setup, Duration.Inf)
 
   implicit val system = ActorSystem("redis-client")
-  implicit val executionContext = system.dispatcher
   implicit val timeout = Timeout(5 seconds)
 
-  implicit val redis = RedisClient("localhost", 6379)
+  implicit val client = RedisClient("localhost", 6379)
 
   GiftyBot.run()
 }
