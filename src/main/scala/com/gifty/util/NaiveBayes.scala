@@ -10,6 +10,7 @@ import slick.jdbc.PostgresProfile.backend.DatabaseDef
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 object NaiveBayes {
   def getGifts(gifts: INDArray, questionId: Int, answer: AnswerType.Value)(implicit db: DatabaseDef, ex: ExecutionContext): Future[INDArray] = {
@@ -132,5 +133,14 @@ object NaiveBayes {
     }
 
     bestId
+  }
+
+  def getRandomQuestion(implicit db: DatabaseDef, ex: ExecutionContext): Int = {
+    val answers = AnswerModel.table
+
+    val a = db.run(answers.map(_.questionId).min.result).value.get.get.get
+    val b = db.run(answers.map(_.questionId).max.result).value.get.get.get
+
+    Random.nextInt(b - a + 1) + a
   }
 }
