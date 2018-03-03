@@ -35,7 +35,12 @@ object NaiveBayes {
       val array = x.toNDArray
       val weighted = array * gifts
 
-      weighted / Nd4j.max(weighted)
+      val normCoeff = Nd4j.max(weighted).getDouble(0)
+
+      if(normCoeff != 0)
+        weighted / normCoeff
+      else
+        weighted
     })
   }
 
