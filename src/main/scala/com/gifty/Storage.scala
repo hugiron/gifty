@@ -10,8 +10,9 @@ import slick.jdbc.PostgresProfile
 import slick.jdbc.meta.MTable
 
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
+import com.gifty.Implicits._
 
 object Storage {
   val config: Config = ConfigFactory.load()

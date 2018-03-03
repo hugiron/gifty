@@ -1,5 +1,7 @@
 package com.gifty
 
+import java.util.concurrent.Executors
+
 import com.gifty.enum.AnswerType
 
 import scala.collection.mutable
@@ -11,8 +13,12 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4s.Implicits._
 
+import scala.concurrent.ExecutionContext
+
 object Implicits {
   implicit val formats = DefaultFormats
+
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
   implicit class MessageExtension(msg: Message) {
     def toSessionId: String = s"${msg.source}:${msg.messageId}"
