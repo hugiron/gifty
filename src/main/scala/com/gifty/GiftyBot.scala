@@ -12,7 +12,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   val token: String = config.getString("telegram.token")
 
   onCommand(UI.startCommand) { implicit msg =>
-    
+
   }
 
   onCommand(UI.helpCommand) { implicit msg =>
