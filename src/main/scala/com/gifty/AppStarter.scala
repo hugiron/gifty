@@ -13,7 +13,6 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object AppStarter extends App with LazyLogging {
   Await.result(createTables(), Duration.Inf)
