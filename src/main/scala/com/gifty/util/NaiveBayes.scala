@@ -9,7 +9,8 @@ import org.nd4s.Implicits._
 import slick.jdbc.PostgresProfile.backend.DatabaseDef
 import slick.jdbc.PostgresProfile.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 object NaiveBayes {
@@ -38,109 +39,122 @@ object NaiveBayes {
 
       val normCoeff = Nd4j.max(weighted).getDouble(0)
 
-      if(normCoeff != 0)
+      if (normCoeff != 0)
         weighted / normCoeff
       else
         weighted
     })
   }
 
-  def getNextQuestion(gifts: INDArray)(implicit db: DatabaseDef, ex: ExecutionContext): Int = {
+  def getNextQuestion(gifts: INDArray)(implicit db: DatabaseDef, ex: ExecutionContext): Future[Int] = {
     val answers = AnswerModel.table
 
-    var bestId = 0
-    var bestVal = Double.MaxValue
+    val future = db.run(answers.map(_.questionId).min.result).flatMap(xs => {
+      val a = xs.head
+      db.run(answers.map(_.questionId).max.result).map(xs => {
+        val b = xs.head
 
-    val a = db.run(answers.map(_.questionId).min.result).value.get.get.get
-    val b = db.run(answers.map(_.questionId).max.result).value.get.get.get
+        (a to b).map { qId =>
+          val query = answers.filter(_.questionId === qId)
+            .sortBy(_.giftId.asc)
+            .map(x => (x.yesCount, x.noCount, x.idkCount))
+            .result
 
-    for (qId <- a to b) {
-      val query = answers.filter(_.questionId === qId)
-        .sortBy(_.giftId.asc)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
+          val futureResult = db.run(query)
 
-      val futureResult = db.run(query)
+          val futureVectorYes = futureResult
+            .map(_.map(x => {
+              val (yes, no, idk) = x
+              yes.toDouble / (yes + no + idk)
+            }))
 
-      val futureVectorYes = futureResult
-        .map(_.map(x => {
-          val (yes, no, idk) = x
-          yes.toDouble / (yes + no + idk)
-        }))
+          val vectorYes = futureVectorYes.map(x => {
+            val arr = x.toNDArray
+            arr /= Nd4j.max(arr)
+          })
 
-      var vectorYes = futureVectorYes.map(_.toNDArray).value.get.get
-      vectorYes /= Nd4j.max(vectorYes)
+          val pYes = vectorYes.map(x => Nd4j.sum(x * gifts))
 
-      val pYes = Nd4j.sum(vectorYes * gifts)
+          val futureVectorNo = futureResult
+            .map(_.map(x => {
+              val (yes, no, idk) = x
+              no.toDouble / (yes + no + idk)
+            }))
 
-      val futureVectorNo = futureResult
-        .map(_.map(x => {
-          val (yes, no, idk) = x
-          no.toDouble / (yes + no + idk)
-        }))
+          val vectorNo = futureVectorNo.map(x => {
+            val arr = x.toNDArray
+            arr /= Nd4j.max(arr)
+          })
 
-      var vectorNo = futureVectorNo.map(_.toNDArray).value.get.get
-      vectorNo /= Nd4j.max(vectorNo)
+          val pNo = vectorNo.map(x => Nd4j.sum(x * gifts))
 
-      val pNo = Nd4j.sum(vectorNo * gifts)
+          val futureVectorIdk = futureResult
+            .map(_.map(x => {
+              val (yes, no, idk) = x
+              idk.toDouble / (yes + no + idk)
+            }))
 
-      val futureVectorIdk = futureResult
-        .map(_.map(x => {
-          val (yes, no, idk) = x
-          idk.toDouble / (yes + no + idk)
-        }))
+          val vectorIdk = futureVectorIdk.map(x => {
+            val arr = x.toNDArray
+            arr /= Nd4j.max(arr)
+          })
 
-      var vectorIdk = futureVectorIdk.map(_.toNDArray).value.get.get
-      vectorIdk /= Nd4j.max(vectorIdk)
+          val pIdk = vectorIdk.map(x => Nd4j.sum(x * gifts))
 
-      val pIdk = Nd4j.sum(vectorIdk * gifts)
+          val hYes = vectorYes.map(x => Nd4j.sum(x.imap(p => -p * Math.log(p))))
+          val hNo = vectorNo.map(x => Nd4j.sum(x.imap(p => -p * Math.log(p))))
+          val hIdk = vectorIdk.map(x => Nd4j.sum(x.imap(p => -p * Math.log(p))))
 
+          val f: Future[Double] = pYes.flatMap(p_yes => {
+            pNo.flatMap(p_no => {
+              pIdk.flatMap(p_idk => {
+                hYes.flatMap(h_yes => {
+                  hNo.flatMap(h_no => {
+                    hIdk.map(h_idk => {
+                      (h_yes * p_yes + h_no * p_no + h_idk * p_idk).getDouble(0)
+                    })
+                  })
+                })
+              })
+            })
+          })
 
-      val futureYes = futureResult.map(_.map(x => {
-        val (yes, no, idk) = x
-        yes.toDouble / (yes + no + idk)
-      }))
+          f
+        }
+      })
+    })
 
-      var hYesQ = gifts * futureYes.map(_.toNDArray).value.get.get
-      hYesQ /= Nd4j.max(hYesQ)
+    future.flatMap((seq: Seq[Future[Double]]) => {
+      val f = Future.sequence(seq)
 
-      val futureNo = futureResult.map(_.map(x => {
-        val (yes, no, idk) = x
-        no.toDouble / (yes + no + idk)
-      }))
+      f.map((seqDoulbe: Seq[Double]) => {
+        var best = Double.MaxValue
+        var bestId = 0
 
-      var hNoQ = gifts * futureNo.map(_.toNDArray).value.get.get
-      hNoQ /= Nd4j.max(hNoQ)
+        for (i <- seqDoulbe.indices) {
+          if (seqDoulbe(i) < best) {
+            best = seqDoulbe(i)
+            bestId = i
+          }
+        }
 
-      val futureIdk = futureResult.map(_.map(x => {
-        val (yes, no, idk) = x
-        idk.toDouble / (yes + no + idk)
-      }))
-
-      var hIdkQ = gifts * futureIdk.map(_.toNDArray).value.get.get
-      hIdkQ /= Nd4j.max(hIdkQ)
-
-      val hYes = Nd4j.sum(hYesQ.imap(p => -p * Math.log(p)))
-      val hNo = Nd4j.sum(hNoQ.imap(p => -p * Math.log(p)))
-      val hIdk = Nd4j.sum(hIdkQ.imap(p => -p * Math.log(p)))
-
-      val newVal = (hYes * pYes + hNo * pNo + hIdk * pIdk).getDouble(0)
-
-      if (newVal < bestVal) {
-        bestId = qId
-        bestVal = newVal
-      }
-    }
-
-    bestId
+        bestId
+      })
+    })
   }
 
-  def getRandomQuestion(implicit db: DatabaseDef, ex: ExecutionContext): Int = {
+  def getRandomQuestion(implicit db: DatabaseDef, ex: ExecutionContext): Future[Int] = {
     val answers = AnswerModel.table
 
-    val a = db.run(answers.map(_.questionId).min.result).value.get.get.get
-    val b = db.run(answers.map(_.questionId).max.result).value.get.get.get
+    db.run(answers.map(_.questionId).min.result).flatMap(xs => {
+      val a = xs.head
 
-    Random.nextInt(b - a + 1) + a
+      db.run(answers.map(_.questionId).max.result).map(xs => {
+        val b = xs.head
+
+        Random.nextInt(b - a + 1) + a
+      })
+    })
+    
   }
 }
