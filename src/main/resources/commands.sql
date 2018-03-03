@@ -1,3 +1,5 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 insert into "Gifts" (name, url) values ('Набор для маникюра Orly Gel FX Starter Kit','https://pudra.ru/orly/brush-nail-artist-dotter-duo-44148.html')
 insert into "Gifts" (name, url) values ('Тарелка «Серый кит»','https://vsedrugoeshop.ru/catalog/posuda/tarelka_seryy_kit/')
 insert into "Gifts" (name, url) values ('Украшения Pandora','http://www.pandora.net/ru-ru/campaigns/perfectmatch/by/filter/mostpopular')
@@ -23,7 +25,7 @@ insert into "Gifts" (name, url) values ('Глобус звездного неб�
 insert into "Gifts" (name, url) values ('Jelly Belly Ассорти','https://vsedrugoeshop.ru/catalog/sladosti/jelly_belly_assorti_bertie_botts_54_gr/')
 insert into "Gifts" (name, url) values ('Подвеска малая Единорог','https://vsedrugoeshop.ru/catalog/ukrasheniya_i_podstavki_dlya_ukrasheniy/podveska_malaya_edinorog/')
 insert into "Gifts" (name, url) values ('Полёт в аэротрубе','https://fifty-gifty.ru/catalog/polety/svobodnyy-polet-v-aerotrube/')
-insert into "Gifts" (name, url) values ('Ночная маска Panda's Dream White Sleeping Pack','https://pudra.ru/tony-moly/nochnaya-maska-pandas-dream-white-sleeping-pack-30181.html?collection_product_id=30180')
+insert into "Gifts" (name, url) values ('Ночная маска Panda Dream White Sleeping Pack','https://pudra.ru/tony-moly/nochnaya-maska-pandas-dream-white-sleeping-pack-30181.html?collection_product_id=30180')
 insert into "Gifts" (name, url) values ('Корзина для белья','https://modi.ru/catalog/goods/korobka-dlya-khraneniya-4/')
 insert into "Gifts" (name, url) values ('Ключница МЖ','https://vsedrugoeshop.ru/catalog/oformlenie_interera/klyuchnitsa_mzh_dub_buk/')
 insert into "Gifts" (name, url) values ('Сапожки-грелки','https://vsedrugoeshop.ru/catalog/tapochki/sapozhki_grelki_bezhevye_35_40/')

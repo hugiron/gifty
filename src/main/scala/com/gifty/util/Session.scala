@@ -9,14 +9,24 @@ import com.gifty.model.History
 import scala.concurrent.{ExecutionContext, Future}
 
 object Session {
-  def getGifts(key: String)
+  def getPosGifts(key: String)
               (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Option[INDArray]] = {
-    redis.hget(key, "gifts").map(_.map(_.toString.toNDArray))
+    redis.hget(key, "pos_gifts").map(_.map(_.toString.toNDArray))
   }
 
-  def setGifts(key: String, gifts: INDArray)
+  def setPosGifts(key: String, gifts: INDArray)
               (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
-    redis.hset(key, "gifts", gifts.toRedis)
+    redis.hset(key, "pos_gifts", gifts.toRedis)
+  }
+
+  def getNegGifts(key: String)
+                 (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Option[INDArray]] = {
+    redis.hget(key, "neg_gifts").map(_.map(_.toString.toNDArray))
+  }
+
+  def setNegGifts(key: String, gifts: INDArray)
+                 (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
+    redis.hset(key, "neg_gifts", gifts.toRedis)
   }
 
   def getHistory(key: String)
@@ -51,6 +61,15 @@ object Session {
 
   def deleteSession(key: String)
                    (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Long] = {
-    redis.hdel(key, "gifts", "history", "last_question", "last_gift")
+    redis.hdel(key, "pos_gifts", "neg_gifts", "history", "last_question", "last_gift")
+  }
+
+  def copyTo(fromKey: String, toKey: String)
+            (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Unit] = {
+    getPosGifts(fromKey).map(_.map(gifts => Session.setPosGifts(toKey, gifts)))
+    getNegGifts(fromKey).map(_.map(gifts => Session.setNegGifts(toKey, gifts)))
+    getHistory(fromKey).map(_.map(history => Session.setHistory(toKey, history)))
+    getLastGift(fromKey).map(_.map(giftId => Session.setLastGift(toKey, giftId)))
+    getLastQuestion(fromKey).map(_.map(questionId => Session.setLastQuestion(toKey, questionId)))
   }
 }

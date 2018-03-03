@@ -14,19 +14,17 @@ object AppConfig {
   val startCommand: String = config.getString("bot.command.start")
   val helpCommand: String = config.getString("bot.command.help")
 
-  val startButton: (String, String) = (config.getString("bot.button.start.tag"), config.getString("bot.button.start.text"))
   val yesButton: (String, String) = (config.getString("bot.button.yes.tag"), config.getString("bot.button.yes.text"))
   val noButton: (String, String) = (config.getString("bot.button.no.tag"), config.getString("bot.button.no.text"))
   val notKnowButton: (String, String) = (config.getString("bot.button.not_know.tag"), config.getString("bot.button.not_know.text"))
   val acceptedButton: (String, String) = (config.getString("bot.button.accepted.tag"), config.getString("bot.button.accepted.text"))
   val rejectedButton: (String, String) = (config.getString("bot.button.rejected.tag"), config.getString("bot.button.rejected.text"))
+  val continueButton: (String, String) = (config.getString("bot.button.continue.tag"), config.getString("bot.button.continue.text"))
+  val stopButton: (String, String) = (config.getString("bot.button.stop.tag"), config.getString("bot.button.stop.text"))
 
   val helpBody: String = config.getString("bot.body.help")
-  val greetingBody: String = config.getString("bot.body.greeting")
+  val continuationBody: String = config.getString("bot.body.continuation")
 
-  val startButtons: InlineKeyboardMarkup = InlineKeyboardMarkup.singleButton(
-    InlineKeyboardButton.callbackData(startButton._2, startButton._1)
-  )
   val questionButtons: InlineKeyboardMarkup = InlineKeyboardMarkup.singleRow(Seq(
     InlineKeyboardButton.callbackData(yesButton._2, yesButton._1),
     InlineKeyboardButton.callbackData(noButton._2, noButton._1),
@@ -35,5 +33,9 @@ object AppConfig {
   val giftButtons: InlineKeyboardMarkup = InlineKeyboardMarkup.singleRow(Seq(
     InlineKeyboardButton.callbackData(acceptedButton._2, acceptedButton._1),
     InlineKeyboardButton.callbackData(rejectedButton._2, rejectedButton._1)
+  ))
+  val continuationButtons: InlineKeyboardMarkup = InlineKeyboardMarkup.singleRow(Seq(
+    InlineKeyboardButton.callbackData(continueButton._2, continueButton._1),
+    InlineKeyboardButton.callbackData(stopButton._2, stopButton._1)
   ))
 }
