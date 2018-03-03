@@ -10,6 +10,8 @@ import com.gifty.Implicits._
 import com.gifty.Storage._
 import com.gifty.util.Session
 import com.typesafe.scalalogging.LazyLogging
+import org.nd4j.linalg.factory.Nd4j
+import org.nd4s.Implicits._
 
 import scala.concurrent._
 import scala.concurrent.duration._

@@ -2,12 +2,14 @@ package com.gifty
 
 import com.gifty.Storage._
 import com.gifty.Implicits._
-import com.gifty.model.{AnswerModel, GiftModel, QuestionModel}
+import com.gifty.enum.AnswerType
+import com.gifty.model.{AnswerModel, GiftModel, History, QuestionModel}
 import com.gifty.util.{NaiveBayes, Session}
 import org.nd4s.Implicits._
 import info.mukel.telegrambot4s.api.{Polling, TelegramBot}
 import info.mukel.telegrambot4s.api.declarative.{Callbacks, Commands}
 import info.mukel.telegrambot4s.methods._
+import info.mukel.telegrambot4s.models.CallbackQuery
 import org.nd4j.linalg.factory.Nd4j
 import slick.jdbc.PostgresProfile.api._
 
@@ -15,25 +17,41 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   override def token: String = AppConfig.token
 
   onCommand(AppConfig.startCommand) { implicit msg =>
-    println("Hello World!")
-    val text = "https://vsedrugoeshop.ru/catalog/dlya_rasteniy/rastenie_v_banke_novogodnyaya_sosna/"
-    request(SendMessage(msg.source, text, replyMarkup = Some(AppConfig.giftButtons)))
+    request(SendMessage(msg.source, AppConfig.greetingBody, replyMarkup = Some(AppConfig.startButtons)))
   }
 
   onCommand(AppConfig.helpCommand) { implicit msg =>
+    request(SendMessage(msg.source, AppConfig.helpBody))
+  }
 
+  onCallbackWithTag(AppConfig.startButton._1) { implicit cbq =>
+    val sessionId = cbq.toSessionId.get
+    postgres.run(GiftModel.table.sortBy(_.id.asc).map(_.likes).result).map(likes => {
+      val gifts = likes.toNDArray
+      val sum = Nd4j.sum(gifts)
+      gifts /= sum
+      val questionId = NaiveBayes.getNextQuestion(gifts)
+      val history = History()
+      postgres.run(QuestionModel.table.filter(_.id === questionId).result).map(questions => {
+        request(EditMessageText(Some(cbq.message.get.source), Some(cbq.message.get.messageId),
+          text = questions.head.question, replyMarkup = Some(AppConfig.questionButtons)))
+      })
+      Session.setGifts(sessionId, gifts)
+      Session.setLastQuestion(sessionId, questionId)
+      Session.setHistory(sessionId, history)
+    })
   }
 
   onCallbackWithTag(AppConfig.yesButton._1) { implicit cbq =>
-
+    questionButtonClick(cbq, AnswerType.Yes)
   }
 
   onCallbackWithTag(AppConfig.noButton._1) { implicit cbq =>
-
+    questionButtonClick(cbq, AnswerType.No)
   }
 
   onCallbackWithTag(AppConfig.notKnowButton._1) { implicit cbq =>
-
+    questionButtonClick(cbq, AnswerType.NotKnow)
   }
 
   onCallbackWithTag(AppConfig.acceptedButton._1) { implicit cbq =>
@@ -67,7 +85,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
             val nextQuestion = NaiveBayes.getNextQuestion(gifts)
             Session.setLastQuestion(sessionId, nextQuestion).onSuccess {
               case _ =>
-                val query = QuestionModel.table.filter(_.id === nextQuestion).take(1)
+                val query = QuestionModel.table.filter(_.id === nextQuestion)
                 postgres.run(query.result).map(question => {
                   request(EditMessageText(Some(cbq.message.get.source),
                     Some(cbq.message.get.messageId),
@@ -75,6 +93,45 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
                     replyMarkup = Some(AppConfig.questionButtons)))
                 })
             }
+        }
+      }
+    }
+  }
+
+  private def questionButtonClick(cbq: CallbackQuery, answer: AnswerType.Value): Unit = {
+    val sessionId = cbq.toSessionId.get
+    Session.getHistory(sessionId).map { case Some(history) =>
+      Session.getGifts(sessionId).map { case Some(cacheGifts) =>
+        Session.getLastQuestion(sessionId).map { case Some(lastQuestion) =>
+          NaiveBayes.getGifts(cacheGifts, lastQuestion, answer).map(gifts => {
+            Session.setGifts(sessionId, gifts)
+            history.add(lastQuestion, answer)
+            Session.setHistory(sessionId, history)
+
+            val sortedGifts = Nd4j.sort(gifts, false)
+            if (sortedGifts(0) - sortedGifts(1) >= AppConfig.threshold) {
+              val giftId = Nd4j.argMax(gifts).getInt(0) + 1
+              postgres.run(GiftModel.table.filter(_.id === giftId).result).map(dbGifts => {
+                val gift = dbGifts.head
+                // TODO: Реализовать полноценный ответ
+                request(EditMessageText(Some(cbq.message.get.source),
+                  Some(cbq.message.get.messageId),
+                  text = gift.url,
+                  replyMarkup = Some(AppConfig.giftButtons)))
+              })
+              Session.setLastGift(sessionId, giftId)
+            } else {
+              val nextQuestion = NaiveBayes.getNextQuestion(gifts)
+              Session.setLastQuestion(sessionId, nextQuestion)
+              val query = QuestionModel.table.filter(_.id === nextQuestion)
+              postgres.run(query.result).map(question => {
+                request(EditMessageText(Some(cbq.message.get.source),
+                  Some(cbq.message.get.messageId),
+                  text = question.head.question,
+                  replyMarkup = Some(AppConfig.questionButtons)))
+              })
+            }
+          })
         }
       }
     }
