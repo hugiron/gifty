@@ -1,5 +1,7 @@
 package com.gifty
 
+import com.gifty.Storage._
+import com.gifty.model.GiftModel
 import com.gifty.util.UI
 import info.mukel.telegrambot4s.api.{Polling, TelegramBot}
 import info.mukel.telegrambot4s.api.declarative.{Callbacks, Commands}
@@ -10,7 +12,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   val token: String = config.getString("telegram.token")
 
   onCommand(UI.startCommand) { implicit msg =>
-
+    
   }
 
   onCommand(UI.helpCommand) { implicit msg =>

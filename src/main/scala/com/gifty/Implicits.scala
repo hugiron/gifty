@@ -4,6 +4,7 @@ import com.gifty.enum.AnswerType
 
 import scala.collection.mutable
 import com.gifty.model.History
+import info.mukel.telegrambot4s.models.{CallbackQuery, Message}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -12,6 +13,14 @@ import org.nd4s.Implicits._
 
 object Implicits {
   implicit val formats = DefaultFormats
+
+  implicit class MessageExtension(msg: Message) {
+    def toSessionId: String = s"${msg.source}:${msg.messageId}"
+  }
+
+  implicit class CallbackQueryExtension(cbq: CallbackQuery) {
+    def toSessionId: Option[String] = cbq.message.map(_.toSessionId)
+  }
 
   implicit class HistoryExtension(history: History) {
     def toRedis: String = {
