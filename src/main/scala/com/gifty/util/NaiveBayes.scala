@@ -6,7 +6,7 @@ import com.gifty.Implicits._
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4s.Implicits._
-import slick.jdbc.JdbcBackend.DatabaseDef
+import slick.jdbc.PostgresProfile.backend.DatabaseDef
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}

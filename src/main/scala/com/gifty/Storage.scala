@@ -6,6 +6,7 @@ import com.gifty.model.{AnswerModel, GiftModel, QuestionModel}
 import com.redis.RedisClient
 import slick.jdbc.PostgresProfile.api._
 import com.typesafe.config.{Config, ConfigFactory}
+import slick.jdbc.PostgresProfile
 import slick.jdbc.meta.MTable
 
 import scala.concurrent.duration._
@@ -31,7 +32,7 @@ object Storage {
   implicit val timeout = Timeout(5 seconds)
 
   implicit val redis = RedisClient(redisHost, redisPort.toInt)
-  implicit val postgres = Database.forURL(postgresUrl, driver = postgresDriver)
+  implicit val postgres: PostgresProfile.backend.DatabaseDef = Database.forURL(postgresUrl, driver = postgresDriver)
 
   def createTables(): Future[List[Unit]] = {
     val tables = List(GiftModel.table, QuestionModel.table, AnswerModel.table)

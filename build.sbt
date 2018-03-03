@@ -18,19 +18,19 @@ val nd4sDependencies = Seq(
   "org.nd4j" %% "nd4s" % "0.9.1"
 )
 
-val testDependencies = Seq(
-  "org.scalamock" %% "scalamock" % "4.0.0" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.4" % Test
-)
-
 val jsonDependencies = Seq(
   "org.json4s" %% "json4s-native" % "3.5.3"
 )
 
+val loggingDependencies = Seq(
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
+)
+
 libraryDependencies ++= (
-  testDependencies ++
   telegramDependencies ++
   storageDependencies ++
   nd4sDependencies ++
-  jsonDependencies
+  jsonDependencies ++
+  loggingDependencies
 )

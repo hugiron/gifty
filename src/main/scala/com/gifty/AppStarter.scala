@@ -9,12 +9,13 @@ import slick.jdbc.meta.MTable
 import com.gifty.Implicits._
 import com.gifty.Storage._
 import com.gifty.util.Session
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object AppStarter extends App {
+object AppStarter extends App with LazyLogging {
   Await.result(createTables(), Duration.Inf)
   GiftyBot.run()
 }

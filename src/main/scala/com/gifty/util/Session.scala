@@ -28,4 +28,29 @@ object Session {
                 (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
     redis.hset(key, "history", history.toRedis)
   }
+
+  def getLastQuestion(key: String)
+                     (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Option[Int]] = {
+    redis.hget(key, "last_question").map(_.map(_.toString.toInt))
+  }
+
+  def setLastQuestion(key: String, questionId: Int)
+                     (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
+    redis.hset(key, "last_question", questionId.toString)
+  }
+
+  def getLastGift(key: String)
+                 (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Option[Int]] = {
+    redis.hget(key, "last_gift").map(_.map(_.toString.toInt))
+  }
+
+  def setLastGift(key: String, giftId: Int)
+                     (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
+    redis.hset(key, "last_gift", giftId.toString)
+  }
+
+  def deleteSession(key: String)
+                   (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Long] = {
+    redis.hdel(key, "gifts", "history", "last_question", "last_gift")
+  }
 }
