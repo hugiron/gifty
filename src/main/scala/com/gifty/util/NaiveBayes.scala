@@ -50,6 +50,7 @@ object NaiveBayes {
 
     for (qId <- a to b) {
       val query = answers.filter(_.questionId === qId)
+        .sortBy(_.giftId.asc)
         .map(x => (x.yesCount, x.noCount, x.idkCount))
         .result
 
