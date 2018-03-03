@@ -12,7 +12,7 @@ declare
 begin
     for r in (select * from "Questions")
     loop
-        insert into "Answers" values (NEW.id, r.id);
+        insert into "Answers" (gift_id, question_id) values (NEW.id, r.id);
     end loop;
     
     return NEW;
@@ -33,7 +33,7 @@ declare
 begin
     for r in (select * from "Gifts")
     loop
-        insert into "Answers" values (r.id, NEW.id);
+        insert into "Answers" (gift_id, question_id) values (r.id, NEW.id);
     end loop;
     
     return NEW;
