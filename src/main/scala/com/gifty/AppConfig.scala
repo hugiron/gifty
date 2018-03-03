@@ -1,10 +1,12 @@
-package com.gifty.util
+package com.gifty
 
 import com.typesafe.config.{Config, ConfigFactory}
 import info.mukel.telegrambot4s.models.{InlineKeyboardButton, InlineKeyboardMarkup}
 
-object UI {
+object AppConfig {
   val config: Config = ConfigFactory.load()
+
+  val token: String = config.getString("telegram.token")
 
   val startCommand: String = config.getString("bot.command.start")
   val helpCommand: String = config.getString("bot.command.help")

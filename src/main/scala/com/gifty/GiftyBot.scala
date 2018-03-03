@@ -1,46 +1,42 @@
 package com.gifty
 
-import akka.util.Timeout
 import com.gifty.Storage._
 import com.gifty.Implicits._
 import com.gifty.model.{AnswerModel, GiftModel, QuestionModel}
-import com.gifty.util.{NaiveBayes, Session, UI}
-import com.redis.RedisClient
+import com.gifty.util.{NaiveBayes, Session}
 import org.nd4s.Implicits._
 import info.mukel.telegrambot4s.api.{Polling, TelegramBot}
 import info.mukel.telegrambot4s.api.declarative.{Callbacks, Commands}
-import com.typesafe.config.{Config, ConfigFactory}
 import info.mukel.telegrambot4s.methods._
 import org.nd4j.linalg.factory.Nd4j
 import slick.jdbc.PostgresProfile.api._
 
 object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
-  val config: Config = ConfigFactory.load()
-  val token: String = config.getString("telegram.token")
+  override def token: String = AppConfig.token
 
-  onCommand(UI.startCommand) { implicit msg =>
+  onCommand(AppConfig.startCommand) { implicit msg =>
     println("Hello World!")
     val text = "https://vsedrugoeshop.ru/catalog/dlya_rasteniy/rastenie_v_banke_novogodnyaya_sosna/"
-    request(SendMessage(msg.source, text, replyMarkup = Some(UI.giftButtons)))
+    request(SendMessage(msg.source, text, replyMarkup = Some(AppConfig.giftButtons)))
   }
 
-  onCommand(UI.helpCommand) { implicit msg =>
-
-  }
-
-  onCallbackWithTag(UI.yesButton._1) { implicit cbq =>
+  onCommand(AppConfig.helpCommand) { implicit msg =>
 
   }
 
-  onCallbackWithTag(UI.noButton._1) { implicit cbq =>
+  onCallbackWithTag(AppConfig.yesButton._1) { implicit cbq =>
 
   }
 
-  onCallbackWithTag(UI.notKnowButton._1) { implicit cbq =>
+  onCallbackWithTag(AppConfig.noButton._1) { implicit cbq =>
 
   }
 
-  onCallbackWithTag(UI.acceptedButton._1) { implicit cbq =>
+  onCallbackWithTag(AppConfig.notKnowButton._1) { implicit cbq =>
+
+  }
+
+  onCallbackWithTag(AppConfig.acceptedButton._1) { implicit cbq =>
     val sessionId = cbq.toSessionId.get
     Session.getHistory(sessionId).map { case Some(history) =>
       Session.getLastGift(sessionId).map { case Some(giftId) =>
@@ -58,7 +54,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
     request(EditMessageReplyMarkup(Some(cbq.message.get.source), Some(cbq.message.get.messageId)))
   }
 
-  onCallbackWithTag(UI.rejectedButton._1) { implicit cbq =>
+  onCallbackWithTag(AppConfig.rejectedButton._1) { implicit cbq =>
     val sessionId = cbq.toSessionId.get
     Session.getLastGift(sessionId).map { case Some(giftId) =>
       Session.getGifts(sessionId).map { case Some(gifts) =>
@@ -76,7 +72,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
                   request(EditMessageText(Some(cbq.message.get.source),
                     Some(cbq.message.get.messageId),
                     text = question.head.question,
-                    replyMarkup = Some(UI.questionButtons)))
+                    replyMarkup = Some(AppConfig.questionButtons)))
                 })
             }
         }
