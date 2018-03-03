@@ -22,15 +22,9 @@ val jsonDependencies = Seq(
   "org.json4s" %% "json4s-native" % "3.5.3"
 )
 
-val loggingDependencies = Seq(
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
-)
-
 libraryDependencies ++= (
   telegramDependencies ++
   storageDependencies ++
   nd4sDependencies ++
-  jsonDependencies ++
-  loggingDependencies
+  jsonDependencies
 )
