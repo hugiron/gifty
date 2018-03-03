@@ -8,6 +8,8 @@ object AppConfig {
 
   val token: String = config.getString("telegram.token")
   val threshold: Double = config.getDouble("model.threshold")
+  val minStepCount: Int = config.getInt("model.min_step_count")
+  val maxStepCount: Int = config.getInt("model.max_step_count")
 
   val startCommand: String = config.getString("bot.command.start")
   val helpCommand: String = config.getString("bot.command.help")

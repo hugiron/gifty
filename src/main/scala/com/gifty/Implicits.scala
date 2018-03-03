@@ -45,6 +45,13 @@ object Implicits {
   }
 
   implicit class NDArrayExtension(array: INDArray) {
+    def toArray: Array[Double] = {
+      val result = new Array[Double](array.length)
+      for (i <- result.indices)
+        result(i) = array.getDouble(i)
+      result
+    }
+
     def toRedis: String = {
       val builder = new mutable.StringBuilder("[")
       for (i <- 0 until array.length) {

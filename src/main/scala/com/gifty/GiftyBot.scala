@@ -13,6 +13,8 @@ import info.mukel.telegrambot4s.models.CallbackQuery
 import org.nd4j.linalg.factory.Nd4j
 import slick.jdbc.PostgresProfile.api._
 
+import scala.util.Random
+
 object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   override def token: String = AppConfig.token
 
@@ -60,13 +62,16 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
     Session.getHistory(sessionId).map { case Some(history) =>
       Session.getLastGift(sessionId).map { case Some(giftId) =>
         for (item <- history) {
-          val query =
-            sqlu"""UPDATE "Answers"
-                  SET ${item._2.toString.toLowerCase} = ${item._2.toString.toLowerCase} + 1
-                  WHERE gift_id = ${giftId} AND question_id = ${item._1}"""
+          val questionId = item._1
+          val query = item._2 match {
+            case AnswerType.Yes => sqlu"""UPDATE "Answers" SET yes_count = yes_count + 1 WHERE gift_id = ${giftId} AND question_id = ${questionId}"""
+            case AnswerType.No => sqlu"""UPDATE "Answers" SET no_count = no_count + 1 WHERE gift_id = ${giftId} AND question_id = ${questionId}"""
+            case AnswerType.NotKnow => sqlu"""UPDATE "Answers" SET idk_count = idk_count + 1 WHERE gift_id = ${giftId} AND question_id = ${questionId}"""
+          }
           postgres.run(query)
         }
-        val query = sqlu"""UPDATE "Gifts" SET likes = likes + 1 WHERE id = ${giftId} """
+        val query = sqlu"""UPDATE "Gifts" SET likes = likes + 1 WHERE id = ${giftId}"""
+        postgres.run(query)
         Session.deleteSession(sessionId)
       }
     }
@@ -110,9 +115,13 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
             history.add(lastQuestion, answer)
             Session.setHistory(sessionId, history)
 
-            val sortedGifts = Nd4j.sort(gifts, false)
-            if (sortedGifts(0) - sortedGifts(1) >= AppConfig.threshold) {
-              val giftId = Nd4j.argMax(gifts).getInt(0) + 1
+            val tmpGifts = Nd4j.create(gifts.length)
+            tmpGifts(0 -> tmpGifts.length) = gifts(0 -> gifts.length)
+            val sortedGifts = Nd4j.sort(tmpGifts, false)
+            if ((sortedGifts(0) - sortedGifts(1) >= AppConfig.threshold || history.buffer.length % AppConfig.maxStepCount == 0) &&
+              history.buffer.lengthCompare(AppConfig.minStepCount) > 0) {
+              val giftsArray = gifts.toArray.zipWithIndex.filter(_._1 > (1 - AppConfig.threshold))
+              val giftId = giftsArray(Random.nextInt(giftsArray.length))._2 + 1
               postgres.run(GiftModel.table.filter(_.id === giftId).result).map(dbGifts => {
                 val gift = dbGifts.head
                 // TODO: Реализовать полноценный ответ
