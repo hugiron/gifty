@@ -48,56 +48,49 @@ object NaiveBayes {
     val a = db.run(answers.map(_.questionId).min.result).value.get.get.get
     val b = db.run(answers.map(_.questionId).max.result).value.get.get.get
 
-    for(qId <- a to b)
-    {
-      val queryVectorYes = answers.filter(_.questionId === qId)
+    for (qId <- a to b) {
+      val query = answers.filter(_.questionId === qId)
+        .sortBy(_.giftId.asc)
         .map(x => (x.yesCount, x.noCount, x.idkCount))
         .result
 
-      val futureVectorYes = db.run(queryVectorYes)
+      val futureResult = db.run(query)
+
+      val futureVectorYes = futureResult
         .map(_.map(x => {
           val (yes, no, idk) = x
           yes.toDouble / (yes + no + idk)
         }))
 
-      val vectorYes = futureVectorYes.map(_.toNDArray)
+      var vectorYes = futureVectorYes.map(_.toNDArray).value.get.get
+      vectorYes /= Nd4j.max(vectorYes)
 
-      val pYes = vectorYes.map(v => Nd4j.sum(v * gifts)).value.get.get
+      val pYes = Nd4j.sum(vectorYes * gifts)
 
-      val queryVectorNo = answers.filter(_.questionId === qId)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
-
-      val futureVectorNo = db.run(queryVectorNo)
+      val futureVectorNo = futureResult
         .map(_.map(x => {
           val (yes, no, idk) = x
           no.toDouble / (yes + no + idk)
         }))
 
-      val vectorNo = futureVectorNo.map(_.toNDArray)
+      var vectorNo = futureVectorNo.map(_.toNDArray).value.get.get
+      vectorNo /= Nd4j.max(vectorNo)
 
-      val pNo = vectorNo.map(v => Nd4j.sum(v * gifts)).value.get.get
+      val pNo = Nd4j.sum(vectorNo * gifts)
 
-      val queryVectorIdk = answers.filter(_.questionId === qId)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
-
-      val futureVectorIdk = db.run(queryVectorIdk)
+      val futureVectorIdk = futureResult
         .map(_.map(x => {
           val (yes, no, idk) = x
           idk.toDouble / (yes + no + idk)
         }))
 
-      val vectorIdk = futureVectorIdk.map(_.toNDArray)
+      var vectorIdk = futureVectorIdk.map(_.toNDArray).value.get.get
+      vectorIdk /= Nd4j.max(vectorIdk)
 
-      val pIdk = vectorIdk.map(v => Nd4j.sum(v * gifts)).value.get.get
+      val pIdk = Nd4j.sum(vectorIdk * gifts)
 
-      val queryYes = answers.filter(_.questionId === qId)
-        .sortBy(_.giftId.asc)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
 
-      val futureYes = db.run(queryYes).map(_.map(x => {
+      val futureYes = futureResult.map(_.map(x => {
         val (yes, no, idk) = x
         yes.toDouble / (yes + no + idk)
       }))
@@ -105,25 +98,15 @@ object NaiveBayes {
       var hYesQ = gifts * futureYes.map(_.toNDArray).value.get.get
       hYesQ /= Nd4j.max(hYesQ)
 
-      val queryNo = answers.filter(_.questionId === qId)
-        .sortBy(_.giftId.asc)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
-
-      val futureNo = db.run(queryYes).map(_.map(x => {
+      val futureNo = futureResult.map(_.map(x => {
         val (yes, no, idk) = x
         no.toDouble / (yes + no + idk)
       }))
 
-      var hNoQ  = gifts * futureNo.map(_.toNDArray).value.get.get
+      var hNoQ = gifts * futureNo.map(_.toNDArray).value.get.get
       hNoQ /= Nd4j.max(hNoQ)
 
-      val queryIdk = answers.filter(_.questionId === qId)
-        .sortBy(_.giftId.asc)
-        .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result
-
-      val futureIdk = db.run(queryYes).map(_.map(x => {
+      val futureIdk = futureResult.map(_.map(x => {
         val (yes, no, idk) = x
         idk.toDouble / (yes + no + idk)
       }))
@@ -132,12 +115,12 @@ object NaiveBayes {
       hIdkQ /= Nd4j.max(hIdkQ)
 
       val hYes = Nd4j.sum(hYesQ.imap(p => -p * Math.log(p)))
-      val hNo  = Nd4j.sum(hNoQ.imap(p => -p * Math.log(p)))
+      val hNo = Nd4j.sum(hNoQ.imap(p => -p * Math.log(p)))
       val hIdk = Nd4j.sum(hIdkQ.imap(p => -p * Math.log(p)))
 
       val newVal = (hYes * pYes + hNo * pNo + hIdk * pIdk).getDouble(0)
 
-      if(newVal < bestVal) {
+      if (newVal < bestVal) {
         bestId = qId
         bestVal = newVal
       }
