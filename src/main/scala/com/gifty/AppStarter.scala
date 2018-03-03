@@ -1,22 +1,15 @@
 package com.gifty
 
-import akka.actor.ActorSystem
-import akka.util.Timeout
-import com.gifty.model._
-import com.redis.RedisClient
-import slick.jdbc.PostgresProfile.api._
-import slick.jdbc.meta.MTable
-import com.gifty.Implicits._
+import ch.qos.logback.classic.{Level, Logger}
 import com.gifty.Storage._
-import com.gifty.util.Session
 import com.typesafe.scalalogging.LazyLogging
-import org.nd4j.linalg.factory.Nd4j
-import org.nd4s.Implicits._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent._
 import scala.concurrent.duration._
 
 object AppStarter extends App with LazyLogging {
+  LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[Logger].setLevel(Level.WARN)
   Await.result(createTables(), Duration.Inf)
   GiftyBot.run()
 }

@@ -47,6 +47,8 @@ object NaiveBayes {
   }
 
   def getNextQuestion(gifts: INDArray)(implicit db: DatabaseDef, ex: ExecutionContext): Future[Int] = {
+    return getRandomQuestion
+
     val answers = AnswerModel.table
 
     val future = db.run(answers.map(_.questionId).min.result).flatMap(xs => {
