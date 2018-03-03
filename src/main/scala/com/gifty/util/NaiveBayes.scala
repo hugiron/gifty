@@ -5,7 +5,6 @@ import com.gifty.model.AnswerModel
 import com.gifty.Implicits._
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.linalg.factory.Nd4j
 import org.nd4s.Implicits._
 import slick.jdbc.JdbcBackend.DatabaseDef
 import slick.jdbc.PostgresProfile.api._
@@ -32,12 +31,11 @@ object NaiveBayes {
     }
     ))
 
-    //TODO: Rename variables
     res.map(x => {
-      val y = x.toNDArray
-      val tmp = y * gifts
+      val array = x.toNDArray
+      val weighted = array * gifts
 
-      y / Nd4j.max(tmp)
+      weighted / Nd4j.max(weighted)
     })
   }
 
@@ -52,36 +50,45 @@ object NaiveBayes {
 
     for(qId <- a to b)
     {
-      val vectorYes = db.run(answers.filter(_.questionId === qId)
+      val queryVectorYes = answers.filter(_.questionId === qId)
         .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result)
+        .result
+
+      val futureVectorYes = db.run(queryVectorYes)
         .map(_.map(x => {
           val (yes, no, idk) = x
           yes.toDouble / (yes + no + idk)
         }))
-        .map(_.toNDArray)
+
+      val vectorYes = futureVectorYes.map(_.toNDArray)
 
       val pYes = vectorYes.map(v => Nd4j.sum(v * gifts)).value.get.get
 
-      val vectorNo = db.run(answers.filter(_.questionId === qId)
+      val queryVectorNo = answers.filter(_.questionId === qId)
         .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result)
+        .result
+
+      val futureVectorNo = db.run(queryVectorNo)
         .map(_.map(x => {
           val (yes, no, idk) = x
           no.toDouble / (yes + no + idk)
         }))
-        .map(_.toNDArray)
+
+      val vectorNo = futureVectorNo.map(_.toNDArray)
 
       val pNo = vectorNo.map(v => Nd4j.sum(v * gifts)).value.get.get
 
-      val vectorIdk = db.run(answers.filter(_.questionId === qId)
+      val queryVectorIdk = answers.filter(_.questionId === qId)
         .map(x => (x.yesCount, x.noCount, x.idkCount))
-        .result)
+        .result
+
+      val futureVectorIdk = db.run(queryVectorIdk)
         .map(_.map(x => {
           val (yes, no, idk) = x
           idk.toDouble / (yes + no + idk)
         }))
-        .map(_.toNDArray)
+
+      val vectorIdk = futureVectorIdk.map(_.toNDArray)
 
       val pIdk = vectorIdk.map(v => Nd4j.sum(v * gifts)).value.get.get
 
