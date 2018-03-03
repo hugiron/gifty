@@ -23,6 +23,7 @@ object AppConfig {
   val stopButton: (String, String) = (config.getString("bot.button.stop.tag"), config.getString("bot.button.stop.text"))
 
   val helpBody: String = config.getString("bot.body.help")
+  val giftBody: String = config.getString("bot.body.gift")
   val continuationBody: String = config.getString("bot.body.continuation")
 
   val questionButtons: InlineKeyboardMarkup = InlineKeyboardMarkup.singleRow(Seq(

@@ -187,10 +187,9 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
                   val giftId = giftsArray(Random.nextInt(giftsArray.length))._2 + 1
                   postgres.run(GiftModel.table.filter(_.id === giftId).result).map(dbGifts => {
                     val gift = dbGifts.head
-                    // TODO: Реализовать полноценный ответ
                     request(EditMessageText(Some(cbq.message.get.source),
                       Some(cbq.message.get.messageId),
-                      text = gift.url,
+                      text = AppConfig.giftBody.replace("{name}", gift.name).replace("{url}", gift.url),
                       replyMarkup = Some(AppConfig.giftButtons)))
                   })
                   Session.setLastGift(sessionId, giftId)
