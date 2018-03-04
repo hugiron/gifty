@@ -18,7 +18,6 @@ import scala.util.Random
 object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   override def token: String = AppConfig.token
 
-  // TODO: pos and neg gifts from likes and dislikes
   onCommand(AppConfig.startCommand) { implicit msg =>
     postgres.run(GiftModel.table.sortBy(_.id.asc).map(x => x.likes -> x.dislikes).result).map(likes => {
       val posGifts = likes.map(_._1).toNDArray
@@ -38,10 +37,6 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
         })
       })
     })
-  }
-
-  onCommand(AppConfig.helpCommand) { implicit msg =>
-    request(SendMessage(msg.source, AppConfig.helpBody))
   }
 
   onCallbackWithTag(AppConfig.yesButton._1) { implicit cbq =>

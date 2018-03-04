@@ -12,7 +12,6 @@ object AppConfig {
   val maxStepCount: Int = config.getInt("model.max_step_count")
 
   val startCommand: String = config.getString("bot.command.start")
-  val helpCommand: String = config.getString("bot.command.help")
 
   val yesButton: (String, String) = (config.getString("bot.button.yes.tag"), config.getString("bot.button.yes.text"))
   val noButton: (String, String) = (config.getString("bot.button.no.tag"), config.getString("bot.button.no.text"))
@@ -22,7 +21,6 @@ object AppConfig {
   val continueButton: (String, String) = (config.getString("bot.button.continue.tag"), config.getString("bot.button.continue.text"))
   val stopButton: (String, String) = (config.getString("bot.button.stop.tag"), config.getString("bot.button.stop.text"))
 
-  val helpBody: String = config.getString("bot.body.help")
   val giftBody: String = config.getString("bot.body.gift")
   val continuationBody: String = config.getString("bot.body.continuation")
 
