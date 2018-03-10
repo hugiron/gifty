@@ -34,9 +34,19 @@ object Implicits {
     }
   }
 
+  implicit class SetExtension(set: Set[Int]) {
+    def toRedis: String = {
+      s"[${set.mkString(", ")}]"
+    }
+  }
+
   implicit class StringExtension(str: String) {
     def toNDArray: INDArray = {
       parse(str).extract[Array[Double]].toNDArray
+    }
+
+    def toQuestions: Set[Int] = {
+      parse(str).extract[Array[Int]].toSet
     }
 
     def toHistory: History = {

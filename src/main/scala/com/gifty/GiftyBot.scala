@@ -19,12 +19,10 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   override def token: String = AppConfig.token
 
   onCommand(AppConfig.startCommand) { implicit msg =>
-    postgres.run(GiftModel.table.sortBy(_.id.asc).map(x => x.likes -> x.dislikes).result).map(likes => {
-      val posGifts = likes.map(_._1).toNDArray
-      val negGifts = likes.map(_._2).toNDArray
-      posGifts /= Nd4j.sum(posGifts)
-      negGifts /= Nd4j.sum(negGifts)
-      NaiveBayes.getNextQuestion.map(questionId => {
+    postgres.run(GiftModel.table.length.result).map(count => {
+      val posGifts = Nd4j.ones(count)
+      val negGifts = Nd4j.ones(count)
+      NaiveBayes.getNextQuestion(posGifts, Set[Int]()).map(questionId => {
         val history = History()
         postgres.run(QuestionModel.table.filter(_.id === questionId).result).map(questions => {
           request(SendMessage(msg.source, questions.head.question, replyMarkup = Some(AppConfig.questionButtons))).map(message => {
@@ -32,6 +30,7 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
             Session.setPosGifts(sessionId, posGifts)
             Session.setNegGifts(sessionId, negGifts)
             Session.setLastQuestion(sessionId, questionId)
+            Session.setQuestions(sessionId, Set[Int](questionId))
             Session.setHistory(sessionId, history)
           })
         })
@@ -48,7 +47,22 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
   }
 
   onCallbackWithTag(AppConfig.notKnowButton._1) { implicit cbq =>
-    questionButtonClick(cbq, AnswerType.NotKnow)
+    val sessionId = cbq.toSessionId.get
+    Session.getPosGifts(sessionId).map { case Some(posGifts) =>
+      Session.getQuestions(sessionId).map(questions => {
+        NaiveBayes.getNextQuestion(posGifts, questions.getOrElse(Set[Int]())).map(nextQuestion => {
+          Session.setQuestions(sessionId, questions.getOrElse(Set[Int]()) + nextQuestion)
+          Session.setLastQuestion(sessionId, nextQuestion)
+          val query = QuestionModel.table.filter(_.id === nextQuestion)
+          postgres.run(query.result).map(question => {
+            request(EditMessageText(Some(cbq.message.get.source),
+              Some(cbq.message.get.messageId),
+              text = question.head.question,
+              replyMarkup = Some(AppConfig.questionButtons)))
+          })
+        })
+      })
+    }
   }
 
   onCallbackWithTag(AppConfig.acceptedButton._1) { implicit cbq =>
@@ -99,17 +113,20 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
           negGifts(giftId - 1) = 0
           Session.setPosGifts(sessionId, posGifts)
           Session.setNegGifts(sessionId, negGifts)
-          NaiveBayes.getNextQuestion.map(nextQuestion => {
-            Session.setLastQuestion(sessionId, nextQuestion).onSuccess {
-              case _ =>
-                val query = QuestionModel.table.filter(_.id === nextQuestion)
-                postgres.run(query.result).map(question => {
-                  request(EditMessageText(Some(cbq.message.get.source),
-                    Some(cbq.message.get.messageId),
-                    text = question.head.question,
-                    replyMarkup = Some(AppConfig.questionButtons)))
-                })
-            }
+          Session.getQuestions(sessionId).map(questions => {
+            NaiveBayes.getNextQuestion(posGifts, questions.getOrElse(Set[Int]())).map(nextQuestion => {
+              Session.setQuestions(sessionId, questions.getOrElse(Set[Int]()) + nextQuestion)
+              Session.setLastQuestion(sessionId, nextQuestion).onSuccess {
+                case _ =>
+                  val query = QuestionModel.table.filter(_.id === nextQuestion)
+                  postgres.run(query.result).map(question => {
+                    request(EditMessageText(Some(cbq.message.get.source),
+                      Some(cbq.message.get.messageId),
+                      text = question.head.question,
+                      replyMarkup = Some(AppConfig.questionButtons)))
+                  })
+              }
+            })
           })
         }
       }
@@ -125,12 +142,15 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
           negGifts(lastGift - 1) = 0
           Session.setPosGifts(sessionId, posGifts)
           Session.setNegGifts(sessionId, negGifts)
-          NaiveBayes.getNextQuestion.map(questionId => {
-            postgres.run(QuestionModel.table.filter(_.id === questionId).result).map(questions => {
-              request(EditMessageText(Some(cbq.message.get.source), Some(cbq.message.get.messageId),
-                text = questions.head.question, replyMarkup = Some(AppConfig.questionButtons)))
+          Session.getQuestions(sessionId).map(questions => {
+            NaiveBayes.getNextQuestion(posGifts, questions.getOrElse(Set[Int]())).map(questionId => {
+              postgres.run(QuestionModel.table.filter(_.id === questionId).result).map(questions => {
+                request(EditMessageText(Some(cbq.message.get.source), Some(cbq.message.get.messageId),
+                  text = questions.head.question, replyMarkup = Some(AppConfig.questionButtons)))
+              })
+              Session.setQuestions(sessionId, questions.getOrElse(Set[Int]()) + questionId)
+              Session.setLastQuestion(sessionId, questionId)
             })
-            Session.setLastQuestion(sessionId, questionId)
           })
         }
       }
@@ -189,14 +209,17 @@ object GiftyBot extends TelegramBot with Polling with Commands with Callbacks {
                   })
                   Session.setLastGift(sessionId, giftId)
                 } else {
-                  NaiveBayes.getNextQuestion.map(nextQuestion => {
-                    Session.setLastQuestion(sessionId, nextQuestion)
-                    val query = QuestionModel.table.filter(_.id === nextQuestion)
-                    postgres.run(query.result).map(question => {
-                      request(EditMessageText(Some(cbq.message.get.source),
-                        Some(cbq.message.get.messageId),
-                        text = question.head.question,
-                        replyMarkup = Some(AppConfig.questionButtons)))
+                  Session.getQuestions(sessionId).map(questions => {
+                    NaiveBayes.getNextQuestion(posGifts, questions.getOrElse(Set[Int]())).map(nextQuestion => {
+                      Session.setQuestions(sessionId, questions.getOrElse(Set[Int]()) + nextQuestion)
+                      Session.setLastQuestion(sessionId, nextQuestion)
+                      val query = QuestionModel.table.filter(_.id === nextQuestion)
+                      postgres.run(query.result).map(question => {
+                        request(EditMessageText(Some(cbq.message.get.source),
+                          Some(cbq.message.get.messageId),
+                          text = question.head.question,
+                          replyMarkup = Some(AppConfig.questionButtons)))
+                      })
                     })
                   })
                 }

@@ -59,9 +59,19 @@ object Session {
     redis.hset(key, "last_gift", giftId.toString)
   }
 
+  def getQuestions(key: String)
+                  (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Option[Set[Int]]] = {
+    redis.hget(key, "questions").map(_.map(_.toString.toQuestions))
+  }
+
+  def setQuestions(key: String, questions: Set[Int])
+                  (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Boolean] = {
+    redis.hset(key, "questions", questions.toRedis)
+  }
+
   def deleteSession(key: String)
                    (implicit redis: RedisClient, context: ExecutionContext, timeout: Timeout): Future[Long] = {
-    redis.hdel(key, "pos_gifts", "neg_gifts", "history", "last_question", "last_gift")
+    redis.hdel(key, "pos_gifts", "neg_gifts", "history", "last_question", "last_gift", "questions")
   }
 
   def copyTo(fromKey: String, toKey: String)
@@ -71,5 +81,6 @@ object Session {
     getHistory(fromKey).map(_.map(history => Session.setHistory(toKey, history)))
     getLastGift(fromKey).map(_.map(giftId => Session.setLastGift(toKey, giftId)))
     getLastQuestion(fromKey).map(_.map(questionId => Session.setLastQuestion(toKey, questionId)))
+    getQuestions(fromKey).map(_.map(questions => Session.setQuestions(toKey, questions)))
   }
 }
