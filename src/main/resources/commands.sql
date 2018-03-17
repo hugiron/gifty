@@ -2,7 +2,7 @@ insert into "Gifts" (name, url) values ('Набор для маникюра Orly
 insert into "Gifts" (name, url) values ('Тарелка «Серый кит»','https://goo.gl/NkMgqe');
 insert into "Gifts" (name, url) values ('Украшения Pandora','https://goo.gl/KZwYZZ');
 insert into "Gifts" (name, url) values ('Дорожная подушка','https://goo.gl/bJVH9w');
-insert into "Gifts" (name, url) values ('Дорожная подушка','https://goo.gl/spZAqL');
+/*insert into "Gifts" (name, url) values ('Дорожная подушка','https://goo.gl/spZAqL');
 insert into "Gifts" (name, url) values ('Дорожная подушка','https://goo.gl/2XM1bR');
 insert into "Gifts" (name, url) values ('Женские носки','https://goo.gl/huPZGH');
 insert into "Gifts" (name, url) values ('Ароматические палочки','https://goo.gl/nHjG8V');
@@ -49,7 +49,7 @@ insert into "Gifts" (name, url) values ('Кигуруми','https://goo.gl/F8tVj
 insert into "Gifts" (name, url) values ('Подарочная карта в Спортмастер','https://goo.gl/Bi8MWH');
 insert into "Gifts" (name, url) values ('Кружка-термос с Гари Поттером','https://goo.gl/DhedQy');
 insert into "Gifts" (name, url) values ('Духи «Пончик»','https://goo.gl/xT8qYn');
-insert into "Gifts" (name, url) values ('Пазлы','https://goo.gl/Q6gVpz');
+insert into "Gifts" (name, url) values ('Пазлы','https://goo.gl/Q6gVpz');*/
 
 insert into "Questions" (question) values ('Она боится темноты?');
 insert into "Questions" (question) values ('У нее есть домашние животные?');
@@ -59,7 +59,7 @@ insert into "Questions" (question) values ('Она любит путешеств
 insert into "Questions" (question) values ('Она поет в душе?');
 insert into "Questions" (question) values ('Она любит вечеринки?');
 insert into "Questions" (question) values ('Она любит домашних животных?');
-insert into "Questions" (question) values ('Она часто слушает музыку?');
+/*insert into "Questions" (question) values ('Она часто слушает музыку?');
 insert into "Questions" (question) values ('Она любит открывать для себя что-то новое?');
 insert into "Questions" (question) values ('Нравится ли ей читать?');
 insert into "Questions" (question) values ('Она учится в школе?');
@@ -125,4 +125,4 @@ insert into "Questions" (question) values ('Она часто ездит в ко
 insert into "Questions" (question) values ('Она делает вещи своими руками?');
 insert into "Questions" (question) values ('Она следит за своей фигурой?');
 insert into "Questions" (question) values ('Она играет в компьютерные игры?');
-insert into "Questions" (question) values ('Она занимается спортом?');
+insert into "Questions" (question) values ('Она занимается спортом?');*/

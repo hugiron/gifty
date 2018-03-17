@@ -62,8 +62,9 @@ object NaiveBayes {
     resPosGifts -> resNegGifts
   }
 
-  def getNextQuestion(gifts: INDArray, questions: Set[Int])(implicit db: DatabaseDef, ex: ExecutionContext): Future[Int] = {
-    val query = sql"""SELECT select_entropy(ARRAY [#${gifts.toArray.map(_.toFloat).mkString(", ")}]);""".as[String]
+  def getNextQuestion(posGifts: INDArray, negGifts: INDArray, questions: Set[Int])
+                     (implicit db: DatabaseDef, ex: ExecutionContext): Future[Int] = {
+    val query = sql"""SELECT select_entropy(ARRAY [#${posGifts.toArray.map(_.toFloat).mkString(", ")}], ARRAY [#${negGifts.toArray.map(_.toFloat).mkString(", ")}]);""".as[String]
     Storage.postgres.run(query).map(res => {
       val entropy = res.head.substring(1, res.head.length - 1).split(',').map(_.toDouble).zipWithIndex
       val sortedEntropy = entropy.sortBy { case (entropy, index) => entropy } toSeq
@@ -79,7 +80,7 @@ object NaiveBayes {
         }
       }
 
-      searchQuestion(sortedEntropy).getOrElse(Random.nextInt(entropy.length) + 1)
+      searchQuestion(sortedEntropy).getOrElse(sortedEntropy.head._2 + 1)
     })
   }
 }
