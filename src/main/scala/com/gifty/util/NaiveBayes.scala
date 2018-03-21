@@ -80,7 +80,7 @@ object NaiveBayes {
         }
       }
 
-      searchQuestion(sortedEntropy).getOrElse(sortedEntropy.head._2 + 1)
+      searchQuestion(sortedEntropy).getOrElse(Random.nextInt(entropy.length) + 1)
     })
   }
 }
